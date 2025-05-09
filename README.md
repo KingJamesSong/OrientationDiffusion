@@ -1,2 +1,2 @@
 # OrientationDiffusion
-Code for "Kuramoto Orientation Diffusion"
+Code for "Kuramoto Orientation Diffusion Models"
