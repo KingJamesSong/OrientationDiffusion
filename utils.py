@@ -136,12 +136,6 @@ def get_data(args):
         ])
         train_dataset = torchvision.datasets.CIFAR10(root = args.dataset_path, download=True, transform=transforms, train=True)
         test_dataset = torchvision.datasets.CIFAR10(root=args.dataset_path, download=True, transform=transforms, train=False)
-    elif args.dataset_name == "ns":
-        dataset = LMDBData(root=os.path.join(args.dataset_path,"navier-stokes-train/Re200.0-t5.0"),resolution=128,std=5.0)
-        train_size = int(0.8 * len(dataset))
-        test_size = len(dataset) - train_size
-        train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
-        #test_dataset = LMDBData(root=os.path.join(args.dataset_path, "navier-stokes-val/Re200.0-t5.0"), resolution=128, std=5.0)
     elif args.dataset_name == "fp":
         transforms = torchvision.transforms.Compose([
             torchvision.transforms.Grayscale(num_output_channels=1),
@@ -153,8 +147,7 @@ def get_data(args):
         dataset = BMPDataset(root=os.path.join(args.dataset_path,"socofing/socofing/SOCOFing/Real"),transform=transforms)
         train_size = int(0.8 * len(dataset))
         test_size = len(dataset) - train_size
-        train_dataset, _ = random_split(dataset, [train_size, test_size])
-        test_dataset =dataset
+        train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
     elif args.dataset_name =='tex':
         transforms = torchvision.transforms.Compose([
             torchvision.transforms.Grayscale(num_output_channels=1),
