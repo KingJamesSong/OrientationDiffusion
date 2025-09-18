@@ -188,74 +188,6 @@ class Up_NP(nn.Module):
         emb = self.emb_layer(t)[:, :, None, None].repeat(1, 1, x.shape[-2], x.shape[-1])
         return x + emb
 
-class UNet_TwoDim(nn.Module):
-    def __init__(self, c_in=2, device="cuda"):
-        super().__init__()
-        self.device = device
-        self.c_in = c_in
-        self.time_dim = 64 * self.c_in
-        self.t_embed1 = nn.Sequential(
-            nn.SiLU(),
-            nn.Linear(64 * self.c_in, 64 * self.c_in),
-        )
-        self.enc1 = nn.Sequential(
-            nn.Linear(2*self.c_in, 16 * self.c_in),
-            nn.ReLU(),
-            nn.Linear(16 * self.c_in, 64 * self.c_in),
-            nn.ReLU(),
-        )
-        self.enc2 = nn.Sequential(
-            #nn.Dropout(p=0.1),
-            nn.Linear(128 * self.c_in, 64 * self.c_in),
-            nn.ReLU(),
-            #nn.Dropout(p=0.1),
-            nn.Linear(64 * self.c_in, 64 * self.c_in),
-            nn.ReLU(),
-        )
-        self.t_embed2 = nn.Sequential(
-            nn.SiLU(),
-            nn.Linear(64 * self.c_in, 64 * self.c_in),
-        )
-        self.enc3 = nn.Sequential(
-            #nn.Dropout(p=0.1),
-            nn.Linear(128 * self.c_in, 64 * self.c_in),
-            nn.ReLU(),
-            #nn.Dropout(p=0.1),
-            nn.Linear(64 * self.c_in, 32 * self.c_in),
-            nn.ReLU(),
-        )
-        self.t_embed3 = nn.Sequential(
-            nn.SiLU(),
-            nn.Linear(64 * self.c_in, 32 * self.c_in),
-        )
-        self.enc4 = nn.Sequential(
-            #nn.Dropout(p=0.1),
-            nn.Linear(64 * self.c_in, 16 * self.c_in),
-            nn.ReLU(),
-            #nn.Dropout(p=0.1),
-            nn.Linear(16 * self.c_in,  self.c_in),
-        )
-
-    def pos_encoding(self, t, channels):
-        inv_freq = 1.0 / (
-            10000
-            ** (torch.arange(0, channels, 2, device=self.device).float() / channels)
-        )
-        pos_enc_a = torch.sin(t.repeat(1, channels // 2) * inv_freq)
-        pos_enc_b = torch.cos(t.repeat(1, channels // 2) * inv_freq)
-        pos_enc = torch.cat([pos_enc_a, pos_enc_b], dim=-1)
-        return pos_enc
-
-    def forward(self, x, t):
-        t = t.unsqueeze(-1).type(torch.float)
-        t = self.pos_encoding(t, self.time_dim).repeat(x.size(0),1)
-        x = torch.cat([x.cos(), x.sin()], dim=1)
-        x1 = self.enc1(x)
-        x2 = self.enc2(torch.cat([x1,self.t_embed1(t)],dim=1))
-        x3 = self.enc3(torch.cat([x2,self.t_embed2(t)],dim=1))
-        x4 = self.enc4(torch.cat([x3,self.t_embed3(t)],dim=1))
-        return x4
-
 class UNetOrig(nn.Module):
     def __init__(self, c_in=3, c_out=3, time_dim=256, img_size=32, device="cuda"):
         super().__init__()
@@ -579,3 +511,4 @@ if __name__ == '__main__':
     t = x.new_tensor([500] * x.shape[0]).long()
     y = x.new_tensor([1] * x.shape[0]).long()
     print(net(x, t, y).shape)
+
