@@ -166,15 +166,6 @@ def get_data(args):
     test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=True)
     return train_dataloader, test_dataloader
 
-def get_two_dim(args):
-    dataset = two_dim_ds(npar=10000,data_tag='circle')
-    train_size = int(0.8 * len(dataset))  # 70% for training
-    test_size = int(0.2 * len(dataset))
-    train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
-    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
-    test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=True)
-    return train_dataloader, test_dataloader
-
 def setup_logging(run_name):
     os.makedirs("models", exist_ok=True)
     os.makedirs("results", exist_ok=True)
@@ -188,4 +179,5 @@ def setup_logging(run_name):
     os.makedirs(os.path.join("phase", run_name), exist_ok=True)
     os.makedirs(os.path.join("recon_images", run_name), exist_ok=True)
     os.makedirs(os.path.join("recon_phases", run_name), exist_ok=True)
+
 
