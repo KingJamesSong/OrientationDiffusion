@@ -1,5 +1,7 @@
 # OrientationDiffusion
-Minimal code for NeurIPS 2025 "Kuramoto Orientation Diffusion Models" at the submission time
+Code for NeurIPS 2025 "Kuramoto Orientation Diffusion Models"
+
+
 
 ## Image Generation
 
