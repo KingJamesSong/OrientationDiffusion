@@ -5,7 +5,7 @@ Code for NeurIPS 2025 "Kuramoto Orientation Diffusion Models"
 
 | Forward Process |Backward Process |
 |:-------------------------:|:-------------------------:|
-|<img src="ezgif-7aa61210995fe3.gif"/> |<img src="ezgif-7e498575768660.gif"/>|
+|<img src="cifar_fp.gif"/> |<img src="cifar_bp.gif"/>|
 
 
 ## Image Generation
