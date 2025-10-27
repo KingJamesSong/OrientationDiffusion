@@ -1,8 +1,10 @@
 # OrientationDiffusion
 Code for NeurIPS 2025 "Kuramoto Orientation Diffusion Models"
 
+## CIFAR10 with 100 steps
+
 | Forward Process |Backward Process |
-|:-------------------------:|:-------------------------:|:-------------------------:|
+|:-------------------------:|:-------------------------:|
 |<img src="ezgif-7aa61210995fe3.gif"/> |<img src="ezgif-7e498575768660.gif"/>|
 
 
