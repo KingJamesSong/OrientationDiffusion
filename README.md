@@ -1,7 +1,17 @@
 # OrientationDiffusion
 Minimal code for NeurIPS 2025 "Kuramoto Orientation Diffusion Models" at the submission time
 
-The full code will be updated soon
+## Image Generation
+
+Check [train_orientation_diffusion.py](https://github.com/KingJamesSong/OrientationDiffusion/blob/main/train_orientation_diffusion.py)
+
+## Unconditional PDE Generation
+
+Check [train_nse.py](https://github.com/KingJamesSong/OrientationDiffusion/blob/main/train_nse.py)
+
+## Conditional Image Generation
+
+Check [train_nse_cond.py](https://github.com/KingJamesSong/OrientationDiffusion/blob/main/train_nse_cond.py)
 
 ## Citation
 
