@@ -502,6 +502,274 @@ class UNet_conditional(nn.Module):
         output = self.outc(x)
         return output
 
+#Unconditioned model for Amplitude SDE
+class UNet2AmpPhase(nn.Module):
+    def __init__(self, c_in=3, c_out=3, time_dim=256, img_size=32, device="cuda"):
+        super().__init__()
+        self.device = device
+        self.time_dim = time_dim
+        self.inc = DoubleConv(c_in*2, 64)
+        self.down1 = Down(64, 128)
+        #self.sa1 = SelfAttention(128, img_size//2)
+        self.down2 = Down(128, 256)
+        self.sa2 = SelfAttention(256, img_size//4)
+        self.down3 = Down(256, 256)
+        self.sa3 = SelfAttention(256, img_size//8)
+        self.down4 = Down(256, 256)
+        self.sa4 = SelfAttention(256, img_size //16)
+
+        self.bot1 = DoubleConv(256, 512)
+        self.bot2 = DoubleConv(512, 512)
+        self.bot3 = DoubleConv(512, 256)
+
+        self.up1 = Up(512, 128)
+        self.sa5 = SelfAttention(128, img_size//8)
+        self.up2 = Up(256+128, 64)
+        self.sa6 = SelfAttention(64, img_size//4)
+        self.up3 = Up(128+64, 64)
+        #self.sa7 = SelfAttention(64, img_size //2)
+        self.up4 = Up(128, 64)
+        self.outc = nn.Conv2d(64, c_out, kernel_size=1)
+
+    def pos_encoding(self, t, channels):
+        inv_freq = 1.0 / (
+            10000
+            ** (torch.arange(0, channels, 2, device=self.device).float() / channels)
+        )
+        pos_enc_a = torch.sin(t.repeat(1, channels // 2) * inv_freq)
+        pos_enc_b = torch.cos(t.repeat(1, channels // 2) * inv_freq)
+        pos_enc = torch.cat([pos_enc_a, pos_enc_b], dim=-1)
+        return pos_enc
+
+    def forward(self, x, phase_coherence, t):
+        x = torch.cat([x, phase_coherence],dim=1)
+        t = t.unsqueeze(-1).type(torch.float)
+        t = self.pos_encoding(t, self.time_dim)
+        x1 = self.inc(x)
+        x2 = self.down1(x1, t)
+        #x2 = self.sa1(x2)
+        x3 = self.down2(x2, t)
+        x3 = self.sa2(x3)
+        x4 = self.down3(x3, t)
+        x4 = self.sa3(x4)
+        x5 = self.down4(x4, t)
+        x5 = self.sa4(x5)
+
+        x5 = self.bot1(x5)
+        x5 = self.bot2(x5)
+        x5 = self.bot3(x5)
+
+        x = self.up1(x5, x4, t)
+        x = self.sa5(x)
+        x = self.up2(x, x3, t)
+        x = self.sa6(x)
+        x = self.up3(x, x2, t)
+        #x = self.sa7(x)
+        x = self.up4(x, x1, t)
+        output = self.outc(x)
+        return output
+
+#Unconditioned model for Phase SDE
+class UNet2PhaseAmp(nn.Module):
+    def __init__(self, c_in=3, c_out=3, time_dim=256, img_size=32, device="cuda"):
+        super().__init__()
+        self.device = device
+        self.time_dim = time_dim
+        self.inc = DoubleConv(c_in*3, 64)
+        self.down1 = Down(64, 128)
+        #self.sa1 = SelfAttention(128, img_size//2)
+        self.down2 = Down(128, 256)
+        self.sa2 = SelfAttention(256, img_size//4)
+        self.down3 = Down(256, 256)
+        self.sa3 = SelfAttention(256, img_size//8)
+        self.down4 = Down(256, 256)
+        self.sa4 = SelfAttention(256, img_size //16)
+
+        self.bot1 = DoubleConv(256, 512)
+        self.bot2 = DoubleConv(512, 512)
+        self.bot3 = DoubleConv(512, 256)
+
+        self.up1 = Up(512, 128)
+        self.sa5 = SelfAttention(128, img_size//8)
+        self.up2 = Up(256+128, 64)
+        self.sa6 = SelfAttention(64, img_size//4)
+        self.up3 = Up(128+64, 64)
+        #self.sa7 = SelfAttention(64, img_size //2)
+        self.up4 = Up(128, 64)
+        self.outc = nn.Conv2d(64, c_out*2, kernel_size=1)
+
+    def pos_encoding(self, t, channels):
+        inv_freq = 1.0 / (
+            10000
+            ** (torch.arange(0, channels, 2, device=self.device).float() / channels)
+        )
+        pos_enc_a = torch.sin(t.repeat(1, channels // 2) * inv_freq)
+        pos_enc_b = torch.cos(t.repeat(1, channels // 2) * inv_freq)
+        pos_enc = torch.cat([pos_enc_a, pos_enc_b], dim=-1)
+        return pos_enc
+
+    def forward(self, x, mag, t):
+        x = torch.cat([x.cos(),x.sin(), mag],dim=1)
+        t = t.unsqueeze(-1).type(torch.float)
+        t = self.pos_encoding(t, self.time_dim)
+        x1 = self.inc(x)
+        x2 = self.down1(x1, t)
+        #x2 = self.sa1(x2)
+        x3 = self.down2(x2, t)
+        x3 = self.sa2(x3)
+        x4 = self.down3(x3, t)
+        x4 = self.sa3(x4)
+        x5 = self.down4(x4, t)
+        x5 = self.sa4(x5)
+
+        x5 = self.bot1(x5)
+        x5 = self.bot2(x5)
+        x5 = self.bot3(x5)
+
+        x = self.up1(x5, x4, t)
+        x = self.sa5(x)
+        x = self.up2(x, x3, t)
+        x = self.sa6(x)
+        x = self.up3(x, x2, t)
+        #x = self.sa7(x)
+        x = self.up4(x, x1, t)
+        output = self.outc(x)
+        return output
+        
+#Conditioned model for Amplitude SDE
+class UNet2AmpPhase_Cond(nn.Module):
+    def __init__(self, c_in=3, c_out=3, time_dim=256, img_size=32, device="cuda"):
+        super().__init__()
+        self.device = device
+        self.time_dim = time_dim
+        self.inc = DoubleConv(c_in*8, 64)
+        self.down1 = Down(64, 128)
+        #self.sa1 = SelfAttention(128, img_size//2)
+        self.down2 = Down(128, 256)
+        self.sa2 = SelfAttention(256, img_size//4)
+        self.down3 = Down(256, 256)
+        self.sa3 = SelfAttention(256, img_size//8)
+        self.down4 = Down(256, 256)
+        self.sa4 = SelfAttention(256, img_size //16)
+
+        self.bot1 = DoubleConv(256, 512)
+        self.bot2 = DoubleConv(512, 512)
+        self.bot3 = DoubleConv(512, 256)
+
+        self.up1 = Up(512, 128)
+        self.sa5 = SelfAttention(128, img_size//8)
+        self.up2 = Up(256+128, 64)
+        self.sa6 = SelfAttention(64, img_size//4)
+        self.up3 = Up(128+64, 64)
+        #self.sa7 = SelfAttention(64, img_size //2)
+        self.up4 = Up(128, 64)
+        self.outc = nn.Conv2d(64, c_out, kernel_size=1)
+
+    def pos_encoding(self, t, channels):
+        inv_freq = 1.0 / (
+            10000
+            ** (torch.arange(0, channels, 2, device=self.device).float() / channels)
+        )
+        pos_enc_a = torch.sin(t.repeat(1, channels // 2) * inv_freq)
+        pos_enc_b = torch.cos(t.repeat(1, channels // 2) * inv_freq)
+        pos_enc = torch.cat([pos_enc_a, pos_enc_b], dim=-1)
+        return pos_enc
+
+    def forward(self, x, phase_coherence, t, x_cond, phase_cond):
+        x = torch.cat([x, phase_coherence, x_cond, phase_cond.cos(), phase_cond.sin()], dim=1)
+        t = t.unsqueeze(-1).type(torch.float)
+        t = self.pos_encoding(t, self.time_dim)
+        x1 = self.inc(x)
+        x2 = self.down1(x1, t)
+        #x2 = self.sa1(x2)
+        x3 = self.down2(x2, t)
+        x3 = self.sa2(x3)
+        x4 = self.down3(x3, t)
+        x4 = self.sa3(x4)
+        x5 = self.down4(x4, t)
+        x5 = self.sa4(x5)
+
+        x5 = self.bot1(x5)
+        x5 = self.bot2(x5)
+        x5 = self.bot3(x5)
+
+        x = self.up1(x5, x4, t)
+        x = self.sa5(x)
+        x = self.up2(x, x3, t)
+        x = self.sa6(x)
+        x = self.up3(x, x2, t)
+        #x = self.sa7(x)
+        x = self.up4(x, x1, t)
+        output = self.outc(x)
+        return output
+
+#Conditioned model for Phase SDE
+class UNet2PhaseAmp_Cond(nn.Module):
+    def __init__(self, c_in=3, c_out=3, time_dim=256, img_size=32, device="cuda"):
+        super().__init__()
+        self.device = device
+        self.time_dim = time_dim
+        self.inc = DoubleConv(c_in*9, 64)
+        self.down1 = Down(64, 128)
+        #self.sa1 = SelfAttention(128, img_size//2)
+        self.down2 = Down(128, 256)
+        self.sa2 = SelfAttention(256, img_size//4)
+        self.down3 = Down(256, 256)
+        self.sa3 = SelfAttention(256, img_size//8)
+        self.down4 = Down(256, 256)
+        self.sa4 = SelfAttention(256, img_size //16)
+
+        self.bot1 = DoubleConv(256, 512)
+        self.bot2 = DoubleConv(512, 512)
+        self.bot3 = DoubleConv(512, 256)
+
+        self.up1 = Up(512, 128)
+        self.sa5 = SelfAttention(128, img_size//8)
+        self.up2 = Up(256+128, 64)
+        self.sa6 = SelfAttention(64, img_size//4)
+        self.up3 = Up(128+64, 64)
+        #self.sa7 = SelfAttention(64, img_size //2)
+        self.up4 = Up(128, 64)
+        self.outc = nn.Conv2d(64, c_out*2, kernel_size=1)
+
+    def pos_encoding(self, t, channels):
+        inv_freq = 1.0 / (
+            10000
+            ** (torch.arange(0, channels, 2, device=self.device).float() / channels)
+        )
+        pos_enc_a = torch.sin(t.repeat(1, channels // 2) * inv_freq)
+        pos_enc_b = torch.cos(t.repeat(1, channels // 2) * inv_freq)
+        pos_enc = torch.cat([pos_enc_a, pos_enc_b], dim=-1)
+        return pos_enc
+
+    def forward(self, x, mag, t, cond, mag_cond):
+        x = torch.cat([x.cos(), x.sin(), mag, cond.cos(), cond.sin(), mag_cond],dim=1)
+        t = t.unsqueeze(-1).type(torch.float)
+        t = self.pos_encoding(t, self.time_dim)
+        x1 = self.inc(x)
+        x2 = self.down1(x1, t)
+        #x2 = self.sa1(x2)
+        x3 = self.down2(x2, t)
+        x3 = self.sa2(x3)
+        x4 = self.down3(x3, t)
+        x4 = self.sa3(x4)
+        x5 = self.down4(x4, t)
+        x5 = self.sa4(x5)
+
+        x5 = self.bot1(x5)
+        x5 = self.bot2(x5)
+        x5 = self.bot3(x5)
+
+        x = self.up1(x5, x4, t)
+        x = self.sa5(x)
+        x = self.up2(x, x3, t)
+        x = self.sa6(x)
+        x = self.up3(x, x2, t)
+        #x = self.sa7(x)
+        x = self.up4(x, x1, t)
+        output = self.outc(x)
+        return output
+
 
 if __name__ == '__main__':
     # net = UNet(device="cpu")
@@ -511,4 +779,5 @@ if __name__ == '__main__':
     t = x.new_tensor([500] * x.shape[0]).long()
     y = x.new_tensor([1] * x.shape[0]).long()
     print(net(x, t, y).shape)
+
 
