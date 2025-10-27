@@ -9,6 +9,7 @@ import numpy
 from torch.utils.data.distributed import DistributedSampler
 from dataset import *
 from torch.utils.data import random_split
+from nse_pde import NavierStokesVelocityDataset, NavierStokesVorticitySeqDataset
 
 def text_save(filename, data):
     file = open(filename,'a')
@@ -148,6 +149,16 @@ def get_data(args):
         train_size = int(0.8 * len(dataset))
         test_size = len(dataset) - train_size
         train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
+    elif args.dataset_name == "ns":
+        train_dataset = NavierStokesVelocityDataset(args.dataset_path)
+        test_dataset = NavierStokesVelocityDataset(args.dataset_path,mode='test')
+        train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+        test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=True)
+    elif args.dataset_name == "ns_seq":
+        train_dataset = NavierStokesVorticitySeqDataset(args.dataset_path)
+        test_dataset = NavierStokesVorticitySeqDataset(args.dataset_path, mode='test')
+        train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+        test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=True)
     elif args.dataset_name =='tex':
         transforms = torchvision.transforms.Compose([
             torchvision.transforms.Grayscale(num_output_channels=1),
@@ -179,5 +190,6 @@ def setup_logging(run_name):
     os.makedirs(os.path.join("phase", run_name), exist_ok=True)
     os.makedirs(os.path.join("recon_images", run_name), exist_ok=True)
     os.makedirs(os.path.join("recon_phases", run_name), exist_ok=True)
+
 
 
