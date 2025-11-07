@@ -16,7 +16,7 @@ Check [train_orientation_diffusion.py](https://github.com/KingJamesSong/Orientat
 
 Check [train_nse.py](https://github.com/KingJamesSong/OrientationDiffusion/blob/main/train_nse.py)
 
-## Conditional Image Generation
+## Conditional PDE Forecasting
 
 Check [train_nse_cond.py](https://github.com/KingJamesSong/OrientationDiffusion/blob/main/train_nse_cond.py)
 
