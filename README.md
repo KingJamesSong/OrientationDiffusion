@@ -1,5 +1,5 @@
 # OrientationDiffusion
-Code for NeurIPS 2025 "Kuramoto Orientation Diffusion Models"
+Code for NeurIPS 2025 "[Kuramoto Orientation Diffusion Models](https://arxiv.org/abs/2509.15328)"
 
 ## CIFAR10 with 100 steps
 
